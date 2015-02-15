@@ -8,10 +8,12 @@
 
 import UIKit
 import Starscream
+import Foundation
 
 class Draw2D: UIView ,WebSocketDelegate{
  var socket = WebSocket(url: NSURL(scheme: "ws", host: "slofurno.com:555", path: "/")!)   
     
+    var myid:Int = -1
     var timer:NSTimer? = nil
     
     var xvars:[Double] = [20,60,120]
@@ -19,6 +21,9 @@ class Draw2D: UIView ,WebSocketDelegate{
     
     var snakes:[Snake] = []
     
+    var players:[Int:Snake] = [Int:Snake]()
+    
+    var mysnake:Snake = Snake(0,0,0,0)
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -37,7 +42,7 @@ class Draw2D: UIView ,WebSocketDelegate{
         socket.delegate = self
         socket.connect()
         for var i = 0 ; i < 10; i++ {
-            snakes.append( Snake(100,100,Double(5*rand1()),Double(5*rand1())))
+           // snakes.append( Snake(100,100,Double(5*rand1()),Double(5*rand1())))
         }
          timer = NSTimer.scheduledTimerWithTimeInterval(1/60, target: self, selector: Selector("Update"), userInfo: nil, repeats: true)
     }
@@ -52,7 +57,48 @@ class Draw2D: UIView ,WebSocketDelegate{
         }
     }
     func websocketDidReceiveMessage(ws: WebSocket, text: String) {
-        println("Received text: \(text)")
+        
+        let json = parseJSON(text)
+        
+        let type:String! = json["type"] as String!
+        let id:Int! = json["id"] as Int!
+        
+        //if let type:String = json["type"] as String?{
+        
+        if type == "init" {
+            //let newid:Int = json["id"] as Int
+            myid = id
+            players[id] = mysnake
+            println("init id : \(id)")
+        }
+        else if type=="update" {
+            
+            let xpos:Double = json["xpos"] as Double
+            let ypos:Double = json["ypos"] as Double
+            let xvel:Double = json["xvel"] as Double
+            let yvel:Double = json["yvel"] as Double
+            
+            
+            if let sn = players[id] {
+                
+                sn.xpos = xpos
+                sn.ypos = ypos
+                sn.xvel = xvel
+                sn.yvel = yvel
+               
+            }
+            else{
+                
+                players[id] = Snake(xpos,ypos,xvel,yvel)
+            
+            }
+            
+        }
+        
+        
+        println("Rec data: \(json)")
+        
+        
     }
     func websocketDidReceiveData(ws: WebSocket, data: NSData) {
         println("Received data: \(data.length)")
@@ -103,6 +149,14 @@ class Draw2D: UIView ,WebSocketDelegate{
         CGContextSetLineWidth(context, 4.0)
         CGContextSetStrokeColorWithColor(context,
             UIColor.blueColor().CGColor)
+        
+        for (pid, player) in players {
+            
+            
+            let rectangle = CGRect(x:player.xpos-20,y:player.ypos-20,width:40,height: 40)
+            CGContextAddRect(context, rectangle)
+            CGContextStrokePath(context)
+        }
         
         for var i = 0; i < snakes.count; i++
         {
@@ -160,6 +214,14 @@ func rand1() -> Float {
     return Float(arc4random()) /  Float(INT32_MAX) - 1
 }
 
+func parseJSON(inputString: String) -> NSDictionary{
+    
+    let data = (inputString as NSString).dataUsingEncoding(NSUTF8StringEncoding)
+    
+    var error: NSError?
+    var boardsDictionary: NSDictionary = NSJSONSerialization.JSONObjectWithData(data!, options: NSJSONReadingOptions.MutableContainers, error: &error) as NSDictionary
+    return boardsDictionary
+}
 class Snake {
     
     var xpos:Double
@@ -175,3 +237,5 @@ class Snake {
     }
     
 }
+
+
