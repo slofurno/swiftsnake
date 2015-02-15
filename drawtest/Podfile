@@ -1,0 +1,21 @@
+# Uncomment this line to define a global platform for your project
+# platform :ios, '6.0'
+
+target 'drawtest' do
+
+end
+
+target 'drawtestTests' do
+
+end
+
+source 'https://github.com/CocoaPods/Specs.git'
+
+xcodeproj 'YourProjectName.xcodeproj'
+platform :ios, '8.0'
+
+pod 'Starscream', :git => "https://github.com/daltoniam/starscream.git", :tag => "0.9.1"
+
+target 'YourProjectNameTests' do
+    pod 'Starscream', :git => "https://github.com/daltoniam/starscream.git", :tag => "0.9.1"
+end
