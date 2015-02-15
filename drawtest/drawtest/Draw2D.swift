@@ -152,7 +152,7 @@ class Draw2D: UIView ,WebSocketDelegate{
         
         for (pid, player) in players {
             
-            
+            player.Integrate(1/60)
             let rectangle = CGRect(x:player.xpos-20,y:player.ypos-20,width:40,height: 40)
             CGContextAddRect(context, rectangle)
             CGContextStrokePath(context)
@@ -234,6 +234,12 @@ class Snake {
         self.ypos = y
         self.xvel = vx
         self.yvel = vy
+    }
+    
+    func Integrate(dt:Double) {
+        
+        self.xpos += self.xvel*dt
+        self.ypos += self.yvel*dt
     }
     
 }
